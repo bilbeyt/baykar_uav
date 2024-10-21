@@ -1,0 +1,19 @@
+version: '3.7'
+
+services:
+  db:
+    image: postgres:17.0-alpine3.20
+    env_file:
+      - av_builder/.env
+    ports:
+      - "5432:5432"
+
+  app:
+    build:
+      context: .
+    ports:
+      - "8000:8000"
+    env_file:
+      - av_builder/.env
+    depends_on:
+      - db
