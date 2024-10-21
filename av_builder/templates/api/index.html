@@ -1,0 +1,141 @@
+{% extends 'api/base.html' %}
+
+{% block content %}
+<div class="bg-body-tertiary p-5 rounded">
+    <h3 id="user-welcome"></h3>
+    <p class="lead" id="team-summary"></p>
+</div>
+
+<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createModal">Create</button>
+
+<table id="datatable">
+    <thead>
+        <tr>
+            <th data-data="id">ID</th>
+            <th data-data="name" id="name-header">Name</th>
+            <th data-data="model">Model</th>
+            <th data-data="aircraft" id="aircraft-header">Aircraft</th>
+            <th data-data="created_at">Created At</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+</table>
+
+<div class="modal fade" id="createModal" tabindex="-1" aria-labelledby="createModal" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h1 class="modal-title fs-5" id="exampleModalLabel">Create</h1>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+            <form>
+                <div class="mb-3">
+                    <label for="modelSelection" class="form-label">Model</label>
+                    <select class="form-select" aria-label="Default select example" id="modelSelection">
+                        <option value="TB2">TB2</option>
+                        <option value="TB3">TB3</option>
+                        <option value="AKINCI">AKINCI</option>
+                        <option value="KIZILELMA">KIZILELMA</option>
+                    </select>
+                </div>
+              </form>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-primary" id="createSubmitBtn">Submit</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+    var headers = {
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+        "X-CSRFToken": "{{ csrf_token }}"
+    }
+
+    async function initializeUser(url){
+        return fetch(url)
+            .then(res => res.json())
+            .then(data => {
+                $("#user-welcome").text(`Welcome ${data.username} from Team ${data.team_name}`);
+                $("#team-summary").text(`Team members: ${data.team_members.join(", ")}`);
+                return data;
+            })
+            .catch(err => {console.log(err)})
+    }
+
+    function initializeDatatable(destroyUrl, listUrl){
+        datatable = new DataTable("#datatable", {
+            columnDefs: [
+                {
+                    defaultContent: '<button type="button" class="btn btn-danger" id="destroyBtn">Delete</button>',
+                    target: -1
+                }
+            ],
+            serverSide: true,
+            ajax: listUrl,
+
+        })
+        datatable.on('click', 'button', function(e){
+            var row = datatable.row(e.target.closest('tr'));
+            var link = destroyUrl;
+            link = link.replace("0", row.data().id);
+            fetch(link, {method: 'DELETE', headers: headers})
+                .then(res => {
+                    let msg = "Deleted";
+                    if(!res.ok){
+                        msg =  res.json();
+                    } else {
+                        row.remove().draw();
+                    }
+                    return msg                    
+                })
+                .then(data => {
+                    console.log(data);
+                })
+                .catch(err => console.log(err))
+        })
+        return datatable;
+    }
+
+    $(document).ready(function(){
+        var userData = null;
+        var datatable = null;
+        var userUrl = "{% url 'retrieve-user' request.user.pk %}";
+        var destroyUrl = "{% url 'destroy-aircraft-parts' 0 %}"
+        var listUrl = "{% url 'list-create-aircraft-parts' %}";
+
+        $("#createSubmitBtn").on("click", function(){
+            var model = $("#modelSelection").val();
+            var data = {
+                name: userData.team_name,
+                model: model,
+            }
+            fetch(listUrl, {method: 'POST', body: JSON.stringify(data), headers: headers})
+                .then(res => res.json())
+                .then(data => {
+                    if("id" in data == true){
+                        datatable.rows.add(data).draw();
+                    } else {
+                        console.log(data)
+                    }
+                    $("#createModal").modal('hide');
+                })
+                .catch(err => console.log(err))
+        });
+        initializeUser(userUrl).then((data) => {
+            userData = data;
+            if(userData.team_name == "Assembly"){
+                destroyUrl = "{% url 'destroy-aircrafts' 0 %}";
+                listUrl = "{% url 'list-create-aircrafts' %}";
+                $("#name-header").remove();
+                $("#aircraft-header").remove();
+            }
+            datatable = initializeDatatable(destroyUrl, listUrl + "?format=datatables");
+        })
+    })
+</script>
+{% endblock %}
