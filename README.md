@@ -21,9 +21,17 @@ Just run the command below and go to `http://localhost:8000`
 
 `docker compose up -d`
 
+## Running Tests
+
+Just run below command while app is running:
+
+`docker compose exec app poetry run python manage.py test`
+
 ## Linting
 
-`black av_builder`
-`isort av_builder`
-`pylint av_builder`
-`flake8 av_builder`
+Inside av_builder folder
+
+`black .`
+`isort .`
+`pylint *.py */*.py`
+`flake8 .`

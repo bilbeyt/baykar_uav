@@ -18,7 +18,9 @@ class UserSerializer(serializers.ModelSerializer):
         return obj.groups.first().name
 
     def get_team_members(self, obj):
-        return User.objects.filter(groups__name=self.get_team_name(obj)).values_list("username", flat=True)
+        return User.objects.filter(groups__name=self.get_team_name(obj)).values_list(
+            "username", flat=True
+        )
 
 
 class AircraftPartSerializer(serializers.ModelSerializer):
