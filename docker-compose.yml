@@ -17,3 +17,5 @@ services:
       - av_builder/.env
     depends_on:
       - db
+    volumes:
+      - ./av_builder:/src
