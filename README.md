@@ -35,3 +35,12 @@ Inside av_builder folder
 `isort .`
 `pylint *.py */*.py`
 `flake8 .`
+
+
+## Troubleshooting
+
+Sometimes startup.sh is not working because of encoding problems. If this is the case you can use:
+
+`docker compose run -it --entrypoint="" app dos2unix startup.sh`
+
+Then try running it again.
